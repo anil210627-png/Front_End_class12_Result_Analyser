@@ -4,14 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>KVS CBSE Class 12 Result Analyser</title>
+<title>KVS Class 12 Result Analyser</title>
 
 <style>
 
 body{
     margin:0;
     font-family:Arial, Helvetica, sans-serif;
-    background:linear-gradient(135deg,#eef2f7,#d9e4f5);
+    background:#eef2f7;
 }
 
 .header{
@@ -20,7 +20,6 @@ body{
     padding:15px;
     display:flex;
     align-items:center;
-    box-shadow:0 2px 8px rgba(0,0,0,0.2);
 }
 
 .logo{
@@ -34,46 +33,35 @@ body{
     font-weight:bold;
 }
 
-.subtitle{
-    font-size:15px;
-    opacity:0.9;
-}
-
 .container{
-    max-width:900px;
-    margin:40px auto;
+    width:90%;
+    max-width:1000px;
+    margin:30px auto;
     background:white;
     padding:30px;
-    border-radius:15px;
+    border-radius:12px;
     box-shadow:0 4px 15px rgba(0,0,0,0.15);
 }
 
-h2{
-    color:#7a0019;
+input[type=file]{
+    margin-top:15px;
     margin-bottom:20px;
-}
-
-input[type="file"]{
-    margin-top:10px;
-    padding:12px;
+    padding:10px;
     width:100%;
     border:1px solid #ccc;
     border-radius:8px;
-    background:#f9f9f9;
-    font-size:15px;
+    background:#fafafa;
 }
 
 button{
-    margin-top:20px;
-    width:100%;
-    padding:14px;
     background:#7a0019;
     color:white;
     border:none;
+    padding:12px 25px;
+    font-size:16px;
     border-radius:8px;
-    font-size:18px;
-    font-weight:bold;
     cursor:pointer;
+    font-weight:bold;
 }
 
 button:hover{
@@ -81,30 +69,53 @@ button:hover{
 }
 
 .result{
-    margin-top:30px;
+    margin-top:25px;
+    background:#f4f6fa;
     padding:20px;
     border-radius:10px;
-    background:#f3f5f8;
-    min-height:100px;
+    overflow-x:auto;
 }
 
-.student-card{
-    padding:12px;
-    margin-top:12px;
-    background:white;
-    border-left:5px solid #7a0019;
-    border-radius:8px;
-    box-shadow:0 2px 5px rgba(0,0,0,0.1);
+table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:15px;
+}
+
+table th{
+    background:#7a0019;
+    color:white;
+    padding:10px;
+    border:1px solid #ddd;
+}
+
+table td{
+    padding:10px;
+    border:1px solid #ddd;
+    text-align:center;
+}
+
+.schoolpi{
+    font-size:22px;
+    font-weight:bold;
+    color:green;
+    margin-top:20px;
 }
 
 .footer{
     text-align:center;
-    margin:30px;
-    color:#555;
+    padding:20px;
+    color:#666;
     font-size:14px;
 }
 
+.status{
+    font-weight:bold;
+    margin-top:10px;
+}
+
 </style>
+
 </head>
 
 <body>
@@ -112,22 +123,13 @@ button:hover{
 <div class="header">
 
 <svg class="logo" viewBox="0 0 100 100">
-<circle cx="50" cy="50" r="45" fill="#ffcc00" stroke="#ffffff" stroke-width="5"/>
-<text x="50%" y="57%" text-anchor="middle"
-font-size="28"
-fill="#7a0019"
-font-weight="bold"
-font-family="Arial">KVS</text>
+<circle cx="50" cy="50" r="45" fill="#ffcc00" stroke="white" stroke-width="5"/>
+<text x="50%" y="58%" text-anchor="middle" font-size="28" fill="#7a0019" font-weight="bold">KVS</text>
 </svg>
 
-<div>
 <div class="title">
-Kendriya Vidyalaya Sangathan
-</div>
-
-<div class="subtitle">
+Kendriya Vidyalaya Sangathan<br>
 CBSE Class 12 Result Analyser
-</div>
 </div>
 
 </div>
@@ -138,12 +140,12 @@ CBSE Class 12 Result Analyser
 
 <input type="file" id="fileInput" accept=".txt">
 
-<button onclick="sendData()">
-Analyse Result
-</button>
+<button onclick="uploadFile()">Calculate PI</button>
 
-<div class="result" id="resultBox">
-Upload TXT file and click Analyse Result.
+<div class="status" id="status"></div>
+
+<div class="result" id="result">
+Result will appear here...
 </div>
 
 </div>
@@ -154,33 +156,29 @@ Developed for Kendriya Vidyalaya Sangathan
 
 <script>
 
-async function sendData() {
+async function uploadFile(){
 
-    const resultBox = document.getElementById("resultBox");
     const fileInput = document.getElementById("fileInput");
+    const status = document.getElementById("status");
+    const resultDiv = document.getElementById("result");
 
-    if (fileInput.files.length === 0) {
-
-        resultBox.innerHTML =
-        "Please choose a TXT file first.";
-
+    if(fileInput.files.length === 0){
+        alert("Please choose a TXT file");
         return;
     }
 
-    let formData = new FormData();
-
+    const formData = new FormData();
     formData.append("file", fileInput.files[0]);
 
-    resultBox.innerHTML =
-    "Processing CBSE result file...";
+    status.innerHTML = "Processing file...";
 
-    try {
+    try{
 
         const response = await fetch(
             "https://back-end-cbse-class12-result-analyser-1.onrender.com/predict",
             {
-                method: "POST",
-                body: formData
+                method:"POST",
+                body:formData
             }
         );
 
@@ -188,73 +186,60 @@ async function sendData() {
 
         console.log(data);
 
-        if (data.success) {
+        if(data.success){
 
-            let html = `
+            status.innerHTML = "Prediction Successful ✅";
 
-            <h2 style="color:green;">
-            Analysis Successful ✅
-            </h2>
+            let html = "";
 
-            <p>
-            <b>School PI:</b>
-            ${data.school_pi}
-            </p>
-
-            <p>
-            <b>Total Students:</b>
-            ${data.total_students}
-            </p>
-
-            <hr>
-
-            <h3>
-            Student Performance Index Details
-            </h3>
+            html += `
+            <div class="schoolpi">
+            School PI : ${data.school_pi}
+            </div>
             `;
 
-            data.students.forEach((student, index) => {
+            html += `
+            <table>
+            <tr>
+                <th>Subject</th>
+                <th>Subject PI</th>
+            </tr>
+            `;
+
+            data.subject_wise_pi.forEach(item => {
 
                 html += `
-
-                <div class="student-card">
-
-                <b>
-                ${index + 1}. ${student.name}
-                </b>
-
-                <br><br>
-
-                Roll Number:
-                ${student.roll}
-
-                <br>
-
-                Performance Index (PI):
-                <b>${student.pi}</b>
-
-                </div>
+                <tr>
+                    <td>${item.subject}</td>
+                    <td>${item.pi}</td>
+                </tr>
                 `;
+
             });
 
-            resultBox.innerHTML = html;
+            html += `</table>`;
 
-        } else {
+            resultDiv.innerHTML = html;
 
-            resultBox.innerHTML =
-            "<span style='color:red;'>❌ "
-            + data.message +
-            "</span>";
+        }
+        else{
+
+            status.innerHTML = "Error in processing file ❌";
+            resultDiv.innerHTML = data.error;
 
         }
 
-    } catch (error) {
+    }
+    catch(error){
 
         console.log(error);
 
-        resultBox.innerHTML =
-        "<span style='color:red;'>❌ Error connecting to backend API</span>";
+        status.innerHTML = "Error connecting to backend API ❌";
+
+        resultDiv.innerHTML = error;
+
     }
+
 }
 
 </script>
