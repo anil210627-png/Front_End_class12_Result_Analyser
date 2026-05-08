@@ -1,17 +1,22 @@
-async function handleFileUpload(event) {
+const fileInput = document.getElementById("fileInput");
+const uploadBtn = document.getElementById("uploadBtn");
+const outputDiv = document.getElementById("output");
 
-    const uploadedFile = event.target.files[0];
+uploadBtn.addEventListener("click", async () => {
 
-    if (!uploadedFile) return;
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert("Please select a TXT file");
+        return;
+    }
 
     const formData = new FormData();
+    formData.append("file", file);
 
-    formData.append("file", uploadedFile);
+    outputDiv.innerHTML = "Processing file...";
 
     try {
-
-        document.getElementById("status").innerText =
-            "Processing file...";
 
         const response = await fetch(
             "https://back-end-cbse-class12-result-analyser-1.onrender.com/predict",
@@ -21,28 +26,83 @@ async function handleFileUpload(event) {
             }
         );
 
-        const result = await response.json();
+        const data = await response.json();
 
-        console.log(result);
+        console.log("Backend Response:", data);
 
-        if (result.error) {
-            throw new Error(result.error);
+        if (!data.success) {
+            throw new Error(data.error || "Backend processing failed");
         }
 
-        document.getElementById("status").innerText =
-            "File processed successfully";
+        if (!data.subjects || !Array.isArray(data.subjects)) {
+            throw new Error("Subjects data missing from backend");
+        }
 
-        console.log("Subjects:", result.subjects);
+        let html = "";
 
-        // YOUR RESULT DISPLAY LOGIC HERE
-        // Example:
-        displayResults(result);
+        html += `
+            <h2>CBSE Subject Wise PI Report</h2>
 
-    } catch (error) {
+            <table border="1" cellpadding="8" cellspacing="0">
+                <tr>
+                    <th>Subject Code</th>
+                    <th>Subject Name</th>
+                    <th>Total</th>
+                    <th>A1</th>
+                    <th>A2</th>
+                    <th>B1</th>
+                    <th>B2</th>
+                    <th>C1</th>
+                    <th>C2</th>
+                    <th>D</th>
+                    <th>E</th>
+                    <th>Pass %</th>
+                    <th>PI</th>
+                </tr>
+        `;
 
-        console.error(error);
+        data.subjects.forEach((subject) => {
 
-        document.getElementById("status").innerText =
-            "Error in processing file ❌";
+            html += `
+                <tr>
+                    <td>${subject.code}</td>
+                    <td>${subject.name}</td>
+                    <td>${subject.totalPresent}</td>
+                    <td>${subject.A1}</td>
+                    <td>${subject.A2}</td>
+                    <td>${subject.B1}</td>
+                    <td>${subject.B2}</td>
+                    <td>${subject.C1}</td>
+                    <td>${subject.C2}</td>
+                    <td>${subject.D}</td>
+                    <td>${subject.E}</td>
+                    <td>${subject.passPercentage}%</td>
+                    <td>${subject.pi}</td>
+                </tr>
+            `;
+        });
+
+        html += `
+            </table>
+
+            <br>
+
+            <h3>Overall School PI : ${data.overallPI}</h3>
+        `;
+
+        outputDiv.innerHTML = html;
+
     }
-}
+    catch (err) {
+
+        console.error(err);
+
+        outputDiv.innerHTML = `
+            <div style="color:red;font-weight:bold;">
+                Error connecting to backend API ❌
+                <br><br>
+                ${err}
+            </div>
+        `;
+    }
+});
