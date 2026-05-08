@@ -7,7 +7,7 @@ uploadBtn.addEventListener("click", async () => {
     const file = fileInput.files[0];
 
     if (!file) {
-        alert("Please select a TXT file");
+        alert("Please select TXT file");
         return;
     }
 
@@ -28,66 +28,52 @@ uploadBtn.addEventListener("click", async () => {
 
         const data = await response.json();
 
-        console.log("Backend Response:", data);
+        console.log(data);
 
-        if (!data.success) {
-            throw new Error(data.error || "Backend processing failed");
+        if (data.success !== true) {
+            outputDiv.innerHTML =
+                "Backend Error ❌<br><br>" +
+                JSON.stringify(data);
+            return;
         }
 
-        if (!data.subjects || !Array.isArray(data.subjects)) {
-            throw new Error("Subjects data missing from backend");
+        if (!data.subjects) {
+            outputDiv.innerHTML =
+                "No subjects returned from backend";
+            return;
         }
 
-        let html = "";
-
-        html += `
-            <h2>CBSE Subject Wise PI Report</h2>
-
-            <table border="1" cellpadding="8" cellspacing="0">
+        let html = `
+            <h2>Subject Wise PI Report</h2>
+            <table border="1" cellpadding="5">
                 <tr>
-                    <th>Subject Code</th>
-                    <th>Subject Name</th>
+                    <th>Code</th>
+                    <th>Subject</th>
                     <th>Total</th>
-                    <th>A1</th>
-                    <th>A2</th>
-                    <th>B1</th>
-                    <th>B2</th>
-                    <th>C1</th>
-                    <th>C2</th>
-                    <th>D</th>
-                    <th>E</th>
                     <th>Pass %</th>
                     <th>PI</th>
                 </tr>
         `;
 
-        data.subjects.forEach((subject) => {
+        for (let i = 0; i < data.subjects.length; i++) {
+
+            const s = data.subjects[i];
 
             html += `
                 <tr>
-                    <td>${subject.code}</td>
-                    <td>${subject.name}</td>
-                    <td>${subject.totalPresent}</td>
-                    <td>${subject.A1}</td>
-                    <td>${subject.A2}</td>
-                    <td>${subject.B1}</td>
-                    <td>${subject.B2}</td>
-                    <td>${subject.C1}</td>
-                    <td>${subject.C2}</td>
-                    <td>${subject.D}</td>
-                    <td>${subject.E}</td>
-                    <td>${subject.passPercentage}%</td>
-                    <td>${subject.pi}</td>
+                    <td>${s.code}</td>
+                    <td>${s.name}</td>
+                    <td>${s.totalPresent}</td>
+                    <td>${s.passPercentage}</td>
+                    <td>${s.pi}</td>
                 </tr>
             `;
-        });
+        }
 
         html += `
             </table>
-
             <br>
-
-            <h3>Overall School PI : ${data.overallPI}</h3>
+            <h3>Overall PI : ${data.overallPI}</h3>
         `;
 
         outputDiv.innerHTML = html;
@@ -95,14 +81,10 @@ uploadBtn.addEventListener("click", async () => {
     }
     catch (err) {
 
-        console.error(err);
+        console.log(err);
 
-        outputDiv.innerHTML = `
-            <div style="color:red;font-weight:bold;">
-                Error connecting to backend API ❌
-                <br><br>
-                ${err}
-            </div>
-        `;
+        outputDiv.innerHTML =
+            "Error connecting to backend API ❌<br><br>" +
+            err;
     }
 });
